@@ -51,6 +51,28 @@ State → regime mapping is principled: states sorted by **mean log return** so 
 | 🔴 Bear | 21.8% |
 | 🟡 Sideways | 41.8% |
 
+### Evaluation Results (Go / No-Go for Phase 2)
+
+Validation run across **49 Nifty 50 stocks** — all 4 hard requirements passed:
+
+| Metric | Pass Rate | Result |
+|---|---|---|
+| Return Separation (Bull > Sideways > Bear, p < 0.05) | 71.4% | ✅ PASS |
+| Regime Persistence (avg duration ≥ 10 days) | 100.0% | ✅ PASS |
+| Regime-Filtered Strategy Sharpe > Buy & Hold | 89.8% | ✅ PASS |
+| Posterior Confidence (avg max prob ≥ 0.60) | 100.0% | ✅ PASS |
+
+**Verdict: 🟢 GO — Phase 1 labels are reliable. Proceeding to Phase 2.**
+
+Sample Sharpe improvements via regime filtering:
+
+| Stock | Strategy Sharpe | Buy & Hold Sharpe |
+|---|---|---|
+| SBIN | 1.97 | 0.56 |
+| HINDUNILVR | 1.31 | 0.29 |
+| INFY | 1.49 | 0.70 |
+| BHARTIARTL | 1.49 | 0.97 |
+
 ### File Structure
 
 ```
@@ -60,6 +82,7 @@ Phase_1/
 ├── feature_engineering.py  # 15+ technical indicators (ATR, RSI, MACD, ADX, BB, etc.)
 ├── hmm_labeler.py          # GaussianHMM training, state mapping, smoothing
 ├── visualize.py            # 5 interactive Plotly HTML charts
+├── evaluate.py             # 8-metric Go/No-Go evaluation with Plotly dashboard
 ├── main.py                 # CLI pipeline orchestrator
 ├── requirements.txt        # Python dependencies
 └── outputs/
