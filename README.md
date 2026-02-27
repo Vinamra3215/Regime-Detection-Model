@@ -51,9 +51,9 @@ State → regime mapping is principled: states sorted by **mean log return** so 
 | 🔴 Bear | 21.8% |
 | 🟡 Sideways | 41.8% |
 
-### Evaluation Results (Go / No-Go for Phase 2)
+### Evaluation Results — Finalized (Go / No-Go for Phase 2)
 
-Validation run across **49 Nifty 50 stocks** — all 4 hard requirements passed:
+Validation run across **49 Nifty 50 stocks** — all 5 hard requirements passed:
 
 | Metric | Pass Rate | Result |
 |---|---|---|
@@ -61,28 +61,33 @@ Validation run across **49 Nifty 50 stocks** — all 4 hard requirements passed:
 | Regime Persistence (avg duration ≥ 10 days) | 100.0% | ✅ PASS |
 | Regime-Filtered Strategy Sharpe > Buy & Hold | 89.8% | ✅ PASS |
 | Posterior Confidence (avg max prob ≥ 0.60) | 100.0% | ✅ PASS |
+| HMM Strategy Sharpe > SMA Crossover Baseline | - | ✅ PASS |
+
+**Era-based validation across 5 market periods:**
+
+| Era | Period | Dominant Regime |
+|---|---|---|
+| Pre-COVID | Jan 2019 – Jan 2020 | Bull |
+| COVID Crash | Feb 2020 – Apr 2020 | Bear |
+| Recovery | May 2020 – Dec 2021 | Bull |
+| 2022 Bear | Jan 2022 – Dec 2022 | Bear/Sideways |
+| 2023 Rally | Jan 2023 – Dec 2024 | Bull |
 
 **Verdict: 🟢 GO — Phase 1 labels are reliable. Proceeding to Phase 2.**
-
-Sample Sharpe improvements via regime filtering:
-
-| Stock | Strategy Sharpe | Buy & Hold Sharpe |
-|---|---|---|
-| SBIN | 1.97 | 0.56 |
-| HINDUNILVR | 1.31 | 0.29 |
-| INFY | 1.49 | 0.70 |
-| BHARTIARTL | 1.49 | 0.97 |
 
 ### File Structure
 
 ```
+Project/
+├── run_phase1.slurm        # SLURM job script (GPU cluster execution)
+├── logs/                   # SLURM stdout/stderr logs
 Phase_1/
 ├── config.py               # All constants, tickers, paths
 ├── data_download.py        # yfinance downloader with caching
-├── feature_engineering.py  # 15+ technical indicators (ATR, RSI, MACD, ADX, BB, etc.)
+├── feature_engineering.py  # 15+ technical indicators (ATR, RSI, MACD, ADX, BB)
 ├── hmm_labeler.py          # GaussianHMM training, state mapping, smoothing
 ├── visualize.py            # 5 interactive Plotly HTML charts
-├── evaluate.py             # 8-metric Go/No-Go evaluation with Plotly dashboard
+├── evaluate.py             # 10-metric evaluation: SMA baseline + 5 era breakdown
 ├── main.py                 # CLI pipeline orchestrator
 ├── requirements.txt        # Python dependencies
 └── outputs/
@@ -104,24 +109,26 @@ Phase_1/
 
 ### Usage
 
+**Local run:**
 ```bash
 cd Phase_1
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run full pipeline (uses cached data if available)
-python main.py
-
-# Force fresh data download
-python main.py --force-download
-
-# Single stock only
-python main.py --ticker RELIANCE.NS
-
-# Skip plot generation
-python main.py --skip-plots
+python main.py                     # full pipeline (cached data if available)
+python main.py --force-download    # force fresh download
+python main.py --ticker RELIANCE.NS  # single stock only
+python evaluate.py                 # run all evaluation metrics
 ```
+
+**SLURM (GPU cluster):**
+```bash
+cd /csehome/b24cm1068/Project
+mkdir -p logs
+sbatch run_phase1.slurm            # submit job to btech/small partition
+squeue -u $USER                    # monitor job status
+cat logs/phase1_<JOBID>.out        # view output
+```
+> The SLURM script requests 1 GPU, 8 CPUs, 32GB RAM on the `btech` partition.
+> Phase 1 (HMM) runs on CPU; the GPU slot is reserved for Phase 2+ Transformer training.
 
 ---
 
