@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Outputs — large generated files (not tracked in git)
+Phase_1/outputs/data/raw/
+Phase_1/outputs/data/labelled/
+Phase_1/outputs/data/models/
+Phase_1/outputs/plots/
+Phase_1/outputs/pipeline.log
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+*.env
