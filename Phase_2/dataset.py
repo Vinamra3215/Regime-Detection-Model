@@ -14,7 +14,7 @@ from config import (
     FEATURE_COLUMNS, REGIME_TO_IDX, NUM_CLASSES,
     WINDOW_SIZE, FORECAST_HORIZON, TRANSITION_WINDOW,
     TRAIN_END, VAL_END, BATCH_SIZE, OUTPUT_DIR,
-    CLASS_WEIGHT_MODE,
+    CLASS_WEIGHT_MODE, TICKER_TO_IDX,
 )
 
 log = logging.getLogger(__name__)
@@ -30,12 +30,15 @@ class RegimeDataset(Dataset):
         self.transitions = torch.FloatTensor(transitions)
         self.dates       = dates
         self.tickers     = tickers
+        self.stock_ids   = torch.LongTensor(
+            [TICKER_TO_IDX.get(t, 0) for t in tickers]
+        )
 
     def __len__(self):
         return len(self.labels)
 
     def __getitem__(self, idx):
-        return self.windows[idx], self.labels[idx], self.transitions[idx]
+        return self.windows[idx], self.labels[idx], self.transitions[idx], self.stock_ids[idx]
 
 
 def load_phase1_data(tickers: list[str] = NIFTY_50_TICKERS,
@@ -229,11 +232,13 @@ if __name__ == "__main__":
 
     train_loader, val_loader, test_loader, cw = create_dataloaders()
 
-    X, y, t = next(iter(train_loader))
+    X, y, t, s = next(iter(train_loader))
     print(f"\nBatch shapes:")
-    print(f"  X (features): {X.shape}")
-    print(f"  y (regime):   {y.shape}")
+    print(f"  X (features):   {X.shape}")
+    print(f"  y (regime):     {y.shape}")
     print(f"  t (transition): {t.shape}")
+    print(f"  s (stock_id):   {s.shape}")
     print(f"\nClass weights: {cw}")
     print(f"Label distribution in batch: {torch.bincount(y, minlength=3)}")
+    print(f"Stock ID range in batch: [{s.min().item()}, {s.max().item()}]")
 
