@@ -59,9 +59,10 @@ def collect_predictions(model: nn.Module, loader) -> dict:
     all_trans_probs = []
     all_trans_labels = []
 
-    for X, y_regime, y_transition in loader:
+    for X, y_regime, y_transition, stock_ids in loader:
         X = X.to(DEVICE)
-        output = model(X)
+        stock_ids = stock_ids.to(DEVICE)
+        output = model(X, stock_ids=stock_ids)
 
         all_probs.append(output["regime_probs"].cpu())
         all_labels.append(y_regime)
