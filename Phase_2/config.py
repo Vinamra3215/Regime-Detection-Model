@@ -58,15 +58,15 @@ STOCK_EMBED_DIM = 16
 NUM_STOCKS      = len(NIFTY_50_TICKERS)
 TICKER_TO_IDX   = {t: i for i, t in enumerate(NIFTY_50_TICKERS)}
 
-D_MODEL       = 128
+D_MODEL       = 64
 N_HEAD        = 4
-NUM_LAYERS    = 4
-FF_DIM        = 256
+NUM_LAYERS    = 2
+FF_DIM        = 128
 DROPOUT       = 0.35
 
 BATCH_SIZE    = 64
 LEARNING_RATE = 3e-5
-WEIGHT_DECAY  = 1e-4
+WEIGHT_DECAY  = 1e-3
 EPOCHS        = 100
 PATIENCE      = 20
 WARMUP_EPOCHS = 5
