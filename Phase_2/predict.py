@@ -11,7 +11,7 @@ from pathlib import Path
 from config import (
     DEVICE, CHECKPOINT_DIR, OUTPUT_DIR,
     IDX_TO_REGIME, FEATURE_COLUMNS, WINDOW_SIZE,
-    PHASE1_LABEL_DIR,
+    PHASE1_LABEL_DIR, TICKER_TO_IDX,
 )
 from model import build_model
 
@@ -65,10 +65,14 @@ def prepare_input(df: pd.DataFrame, scaler, num_features: int,
 
 
 @torch.no_grad()
-def predict_regime(model, input_tensor: torch.Tensor) -> dict:
+def predict_regime(model, input_tensor: torch.Tensor, ticker: str = None) -> dict:
     model.eval()
     input_tensor = input_tensor.to(DEVICE)
-    output = model(input_tensor)
+
+    stock_idx = TICKER_TO_IDX.get(ticker, 0) if ticker else 0
+    stock_ids = torch.LongTensor([stock_idx]).to(DEVICE)
+
+    output = model(input_tensor, stock_ids=stock_ids)
 
     probs     = output["regime_probs"][0].cpu().numpy()
     pred_idx  = probs.argmax()
@@ -99,7 +103,7 @@ def predict_ticker(ticker: str, model=None, scaler=None):
 
     df = pd.read_csv(path, index_col="Date", parse_dates=True)
     input_tensor = prepare_input(df, scaler, num_features)
-    result = predict_regime(model, input_tensor)
+    result = predict_regime(model, input_tensor, ticker=ticker)
 
     result["ticker"] = ticker
     result["latest_date"] = str(df.index[-1].date())
