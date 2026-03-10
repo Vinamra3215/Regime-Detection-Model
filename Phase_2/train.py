@@ -136,14 +136,15 @@ def train_one_epoch(
     total_samples = 0
     transition_correct = 0
 
-    for batch_idx, (X, y_regime, y_transition) in enumerate(loader):
+    for batch_idx, (X, y_regime, y_transition, stock_ids) in enumerate(loader):
         X            = X.to(device)
         y_regime     = y_regime.to(device)
         y_transition = y_transition.to(device).unsqueeze(1)
+        stock_ids    = stock_ids.to(device)
 
         optimizer.zero_grad()
 
-        output = model(X)
+        output = model(X, stock_ids=stock_ids)
 
         loss_regime = regime_criterion(output["regime_logits"], y_regime)
 
@@ -196,12 +197,13 @@ def validate(
     all_probs = []
     all_labels = []
 
-    for X, y_regime, y_transition in loader:
+    for X, y_regime, y_transition, stock_ids in loader:
         X            = X.to(device)
         y_regime     = y_regime.to(device)
         y_transition = y_transition.to(device).unsqueeze(1)
+        stock_ids    = stock_ids.to(device)
 
-        output = model(X)
+        output = model(X, stock_ids=stock_ids)
 
         loss_regime     = regime_criterion(output["regime_logits"], y_regime)
         loss_transition = transition_criterion(output["transition_logit"], y_transition)
@@ -269,7 +271,7 @@ def train(
         tickers=tickers, batch_size=batch_size
     )
 
-    sample_X, _, _ = next(iter(train_loader))
+    sample_X, _, _, _ = next(iter(train_loader))
     num_features = sample_X.shape[-1]
     log.info(f"Detected {num_features} input features")
 
