@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from config import (
     D_MODEL, N_HEAD, NUM_LAYERS, FF_DIM, DROPOUT,
     NUM_CLASSES, WINDOW_SIZE,
+    NUM_STOCKS, STOCK_EMBED_DIM,
 )
 
 
@@ -69,15 +70,20 @@ class TransformerRegimeModel(nn.Module):
         ff_dim: int = FF_DIM,
         dropout: float = DROPOUT,
         num_classes: int = NUM_CLASSES,
+        num_stocks: int = NUM_STOCKS,
+        stock_embed_dim: int = STOCK_EMBED_DIM,
         enable_fusion: bool = False,
     ):
         super().__init__()
 
         self.d_model = d_model
         self.num_features = num_features
+        self.stock_embed_dim = stock_embed_dim
+
+        self.stock_embedding = nn.Embedding(num_stocks, stock_embed_dim)
 
         self.input_proj = nn.Sequential(
-            nn.Linear(num_features, d_model),
+            nn.Linear(num_features + stock_embed_dim, d_model),
             nn.LayerNorm(d_model),
             nn.GELU(),
             nn.Dropout(dropout),
@@ -132,10 +138,19 @@ class TransformerRegimeModel(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
+        stock_ids: torch.Tensor = None,
         sentiment: torch.Tensor = None,
         return_attention: bool = False,
     ) -> dict[str, torch.Tensor]:
-        batch_size = x.size(0)
+        batch_size, window_size, _ = x.shape
+
+        if stock_ids is not None:
+            stock_emb = self.stock_embedding(stock_ids)
+            stock_emb = stock_emb.unsqueeze(1).expand(-1, window_size, -1)
+            x = torch.cat([x, stock_emb], dim=-1)
+        else:
+            zero_emb = torch.zeros(batch_size, window_size, self.stock_embed_dim, device=x.device)
+            x = torch.cat([x, zero_emb], dim=-1)
 
         x = self.input_proj(x)
 
@@ -189,7 +204,8 @@ if __name__ == "__main__":
     model = build_model(num_features)
 
     x = torch.randn(batch_size, window_size, num_features)
-    output = model(x)
+    stock_ids = torch.randint(0, NUM_STOCKS, (batch_size,))
+    output = model(x, stock_ids=stock_ids)
 
     print(f"regime_logits:    {output['regime_logits'].shape}")
     print(f"regime_probs:     {output['regime_probs'].shape}")
@@ -198,4 +214,5 @@ if __name__ == "__main__":
     print(f"features:         {output['features'].shape}")
     print(f"\nSample regime probs: {output['regime_probs'][0].detach()}")
     print(f"Sample transition prob: {output['transition_prob'][0].item():.4f}")
+    print(f"\nStock embedding shape: {model.stock_embedding.weight.shape}")
 
