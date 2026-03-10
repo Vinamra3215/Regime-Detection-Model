@@ -20,9 +20,9 @@ The overall goal is to build a production-grade, risk-aware RL trading agent tha
 ## Architecture Roadmap
 
 ```
-Phase 1  →  HMM Regime Labeling          ✅ COMPLETE
-Phase 2  →  Transformer Regime Classifier (price features only)
-Phase 3  →  Add Sentiment (FinBERT + news)
+Phase 1  →  HMM Regime Labeling                              ✅ COMPLETE
+Phase 2  →  Transformer Regime Classifier (+ Stock Embeds)    ✅ COMPLETE
+Phase 3  →  Add Sentiment (FinBERT + news)                    🔜 NEXT
 Phase 4  →  Uncertainty + Transition Detection heads
 Phase 5  →  Safe RL Trading Agent (PPO/SAC + CVaR)
 ```
@@ -51,7 +51,7 @@ State → regime mapping is principled: states sorted by **mean log return** so 
 | 🔴 Bear | 21.8% |
 | 🟡 Sideways | 41.8% |
 
-### Evaluation Results — Finalized (Go / No-Go for Phase 2)
+### Evaluation Results
 
 Validation run across **49 Nifty 50 stocks** — all 5 hard requirements passed:
 
@@ -78,9 +78,6 @@ Validation run across **49 Nifty 50 stocks** — all 5 hard requirements passed:
 ### File Structure
 
 ```
-Project/
-├── run_phase1.slurm        # SLURM job script (GPU cluster execution)
-├── logs/                   # SLURM stdout/stderr logs
 Phase_1/
 ├── config.py               # All constants, tickers, paths
 ├── data_download.py        # yfinance downloader with caching
@@ -89,12 +86,7 @@ Phase_1/
 ├── visualize.py            # 5 interactive Plotly HTML charts
 ├── evaluate.py             # 10-metric evaluation: SMA baseline + 5 era breakdown
 ├── main.py                 # CLI pipeline orchestrator
-├── requirements.txt        # Python dependencies
-└── outputs/
-    ├── data/raw/           # Downloaded OHLCV CSVs
-    ├── data/labelled/      # Regime-labelled CSVs (with posterior probs)
-    ├── data/models/        # Trained HMM .pkl files
-    └── plots/              # Interactive HTML Plotly charts
+└── requirements.txt        # Python dependencies
 ```
 
 ### Generated Plots
@@ -121,14 +113,128 @@ python evaluate.py                 # run all evaluation metrics
 
 **SLURM (GPU cluster):**
 ```bash
-cd /csehome/b24cm1068/Project
-mkdir -p logs
 sbatch run_phase1.slurm            # submit job to btech/small partition
 squeue -u $USER                    # monitor job status
 cat logs/phase1_<JOBID>.out        # view output
 ```
-> The SLURM script requests 1 GPU, 8 CPUs, 32GB RAM on the `btech` partition.
-> Phase 1 (HMM) runs on CPU; the GPU slot is reserved for Phase 2+ Transformer training.
+
+---
+
+## Phase 2 — Transformer Regime Classifier ✅
+
+### What It Does
+
+Builds a **Transformer encoder** that takes sliding windows of Phase 1's technical features and predicts:
+
+- **Head 1 — Regime Classification:** Next-day regime (Bull / Bear / Sideways) via 3-class classification
+- **Head 2 — Transition Detection:** Binary flag for whether a regime change occurs within 5 days
+
+Key innovation: **Per-stock learnable embeddings** allow the model to capture stock-specific regime patterns while sharing the core Transformer weights across all 50 stocks.
+
+### Model Architecture
+
+```
+Input (60-day window × 18 features)
+       │
+       ├── Per-Stock Embedding (16-dim, concatenated to each timestep)
+       │
+       ▼
+  Linear Projection → d_model=128
+       │
+  Positional Encoding (learnable)
+       │
+  4 × Transformer Encoder Layers
+       │  (n_head=4, ff_dim=256, pre-LN, GELU, dropout=0.35)
+       │
+  [Sentiment Fusion Placeholder — Phase 4]
+       │
+  Global Pooling (last-token ⊕ mean-pool → project to d_model)
+       │
+       ├── Regime Head → 3-class softmax (Bull/Bear/Sideways)
+       └── Transition Head → sigmoid (regime change within 5 days)
+```
+
+### Key Features
+
+| Feature | Details |
+|---|---|
+| **18 Technical Features** | log returns, rolling vol, ATR, RSI, MACD, Bollinger, ADX, volume ratio, MA distance, linear regression slopes |
+| **Stock Embeddings** | 16-dim learnable embedding per stock (50 stocks), concatenated to features at each timestep |
+| **Focal Loss** | γ=2.0, per-class α from inverse-frequency weighting — focuses training on hard/minority samples |
+| **Label Smoothing** | 0.1 — prevents overconfident predictions |
+| **Transition Head** | BCEWithLogitsLoss, pos_weight=6.0 to handle ~13.5% positive rate |
+| **LR Schedule** | 5-epoch linear warmup → cosine decay (LR=3e-5) |
+| **Regularization** | Dropout=0.35, weight decay=1e-4, gradient clipping (max_norm=1.0) |
+| **Early Stopping** | Patience=20 epochs on validation accuracy |
+| **Time-Based Split** | Train: 2019–2022, Val: 2023, Test: 2024 (no data leakage) |
+
+### Go / No-Go Thresholds
+
+| Metric | Threshold | Purpose |
+|---|---|---|
+| Overall Test Accuracy | ≥ 75% | Basic model quality |
+| High-Confidence Accuracy (prob > 0.7) | ≥ 80% | The model knows what it knows |
+| Min Per-Class F1 | ≥ 0.65 | No class is neglected |
+| Transition Recall | ≥ 60% | Catches regime changes |
+
+### File Structure
+
+```
+Phase_2/
+├── config.py           # Hyperparameters, paths, stock embedding config
+├── dataset.py          # Sliding-window dataset with stock ID tracking
+├── model.py            # Transformer encoder + stock embeddings + dual heads
+├── train.py            # Training loop: focal loss, warmup+cosine LR, early stopping
+├── evaluate.py         # Comprehensive metrics, confusion matrix, calibration, Go/No-Go
+├── predict.py          # Inference module for single/batch stock prediction
+└── requirements.txt    # Python dependencies
+```
+
+### Usage
+
+**Local run:**
+```bash
+cd Phase_2
+pip install -r requirements.txt
+python train.py                         # full training (100 epochs)
+python train.py --smoke-test            # quick 2-epoch validation
+python train.py --lr 1e-4 --epochs 50   # custom hyperparameters
+python evaluate.py                      # run full Go/No-Go evaluation
+python predict.py --ticker RELIANCE.NS  # predict single stock regime
+python predict.py --all                 # predict all Nifty 50
+```
+
+**SLURM (GPU cluster):**
+```bash
+sbatch run_phase2.slurm
+squeue -u $USER
+cat logs/phase2_<JOBID>.out
+```
+
+---
+
+## Future Phases
+
+### Phase 3 — Sentiment Integration 🔜
+
+- **FinBERT** fine-tuned on Indian financial news for sentiment scoring
+- News data aggregated per ticker per day (headline + article body)
+- Sentiment features fused with price features via cross-attention in the existing Fusion Placeholder module
+- Expected improvement: better transition detection by capturing news-driven regime shifts
+
+### Phase 4 — Uncertainty & Enhanced Transition Detection
+
+- Monte Carlo Dropout and/or ensemble-based **uncertainty quantification**
+- Calibrated confidence scores for selective trading (only trade when model is confident)
+- Enhanced transition head with lookahead labels and multi-horizon prediction
+
+### Phase 5 — Safe RL Trading Agent
+
+- **PPO / SAC** agent using regime predictions as state features
+- **CVaR-constrained reward** for risk-aware position sizing
+- Action space: Long / Short / Flat with position sizing
+- Walk-forward backtesting with transaction costs and slippage
+- Production deployment: FastAPI backend + React dashboard
 
 ---
 
@@ -138,14 +244,14 @@ cat logs/phase1_<JOBID>.out        # view output
 |---|---|
 | Data | `yfinance` |
 | Features | `ta`, `numpy`, `pandas` |
-| Regime Model | `hmmlearn` (GaussianHMM) |
-| Visualization | `plotly` |
-| ML (Phase 2+) | `torch`, Transformer encoder |
-| Sentiment (Phase 3+) | `FinBERT` |
+| Regime Model (Phase 1) | `hmmlearn` (GaussianHMM) |
+| Classifier (Phase 2) | `torch` (Transformer encoder) |
+| Visualization | `plotly`, `tensorboard` |
+| Sentiment (Phase 3) | `FinBERT`, `transformers` |
 | RL Agent (Phase 5) | `PPO / SAC`, CVaR reward |
 | Backend (Phase 5) | `FastAPI`, `PostgreSQL` |
 | Frontend (Phase 5) | `React` |
-| Infra | `Docker`, CI/CD |
+| Infra | `Docker`, CI/CD, SLURM |
 
 ---
 
@@ -157,5 +263,8 @@ cat logs/phase1_<JOBID>.out        # view output
 
 - **HMM for labeling**: Unsupervised, principled, industry-standard for latent regime discovery
 - **State smoothing**: 3-day minimum run to avoid single-day noise labels
-- **Posterior probabilities**: Every row carries `prob_Bull`, `prob_Bear`, `prob_Sideways` — giving the downstream RL agent soft regime information rather than hard labels
+- **Posterior probabilities**: Every row carries `prob_Bull`, `prob_Bear`, `prob_Sideways` — giving the downstream model soft regime information rather than hard labels
+- **Stock embeddings**: Learnable per-stock vectors let the Transformer capture stock-specific regime dynamics while sharing temporal pattern weights
+- **Focal loss**: Prevents the dominant Sideways class from overwhelming training; focuses learning on hard Bear/transition samples
+- **Dual-head architecture**: Regime + transition heads share the encoder, providing complementary learning signals
 - **Walk-forward validation**: Each phase validated on held-out time windows before proceeding
