@@ -54,6 +54,10 @@ REGIME_TO_IDX = {"Bear": 0, "Sideways": 1, "Bull": 2}
 IDX_TO_REGIME = {v: k for k, v in REGIME_TO_IDX.items()}
 NUM_CLASSES   = 3
 
+STOCK_EMBED_DIM = 16
+NUM_STOCKS      = len(NIFTY_50_TICKERS)
+TICKER_TO_IDX   = {t: i for i, t in enumerate(NIFTY_50_TICKERS)}
+
 D_MODEL       = 128
 N_HEAD        = 4
 NUM_LAYERS    = 4
