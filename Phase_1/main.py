@@ -5,23 +5,27 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
+_base_dir = Path(__file__).resolve().parent
+_project_dir = _base_dir.parent
+_log_dir = _project_dir / "results" / "phase_1" / "logs"
+_log_dir.mkdir(parents=True, exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     datefmt="%H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("outputs/pipeline.log", mode="w"),
+        logging.FileHandler(str(_log_dir / "pipeline.log"), mode="w"),
     ]
 )
 log = logging.getLogger(__name__)
 
-from config import NIFTY_50_TICKERS, BASE_DIR
+from config import NIFTY_50_TICKERS, RESULTS_DIR
 from data_download import get_data
 from feature_engineering import compute_features
 from hmm_labeler import run_labeling, load_labelled_data
 from visualize import generate_all_plots
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Phase 1 — Regime Labeling Pipeline")
@@ -31,13 +35,11 @@ def parse_args():
     parser.add_argument("--per-ticker-plots", type=int, default=10)
     return parser.parse_args()
 
-
 def print_banner():
     print("\n" + "═" * 65)
     print("  🧠  PHASE 1 — HMM REGIME LABELING PIPELINE")
     print(f"       Nifty 50 | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("═" * 65 + "\n")
-
 
 def print_summary(labelled: dict, elapsed: float):
     print("\n" + "═" * 65)
@@ -76,7 +78,6 @@ def print_summary(labelled: dict, elapsed: float):
     print("═" * 65)
     print(f"  ⏱  Total time: {elapsed:.1f}s")
     print("═" * 65 + "\n")
-
 
 def main():
     args = parse_args()
@@ -143,11 +144,10 @@ def main():
     print_summary(labelled, elapsed)
 
     print(f"\n✅  Phase 1 complete! Output files:")
-    print(f"   • Labelled CSVs : {BASE_DIR}/outputs/data/labelled/")
-    print(f"   • HMM models    : {BASE_DIR}/outputs/data/models/")
-    print(f"   • Plotly charts : {BASE_DIR}/outputs/plots/")
-    print(f"   • Pipeline log  : {BASE_DIR}/outputs/pipeline.log\n")
-
+    print(f"   • Labelled CSVs : {RESULTS_DIR}/data/labelled/")
+    print(f"   • HMM models    : {RESULTS_DIR}/data/models/")
+    print(f"   • Plotly charts : {RESULTS_DIR}/plots/")
+    print(f"   • Pipeline log  : {RESULTS_DIR}/logs/pipeline.log\n")
 
 if __name__ == "__main__":
     main()

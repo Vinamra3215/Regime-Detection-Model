@@ -2,11 +2,14 @@ import os
 from pathlib import Path
 
 BASE_DIR        = Path(__file__).resolve().parent
-DATA_RAW_DIR    = BASE_DIR / "outputs" / "data" / "raw"
-DATA_LABEL_DIR  = BASE_DIR / "outputs" / "data" / "labelled"
-PLOTS_DIR       = BASE_DIR / "outputs" / "plots"
+PROJECT_DIR     = BASE_DIR.parent
+RESULTS_DIR     = PROJECT_DIR / "results" / "phase_1"
+DATA_RAW_DIR    = RESULTS_DIR / "data" / "raw"
+DATA_LABEL_DIR  = RESULTS_DIR / "data" / "labelled"
+PLOTS_DIR       = RESULTS_DIR / "plots"
+LOG_DIR         = RESULTS_DIR / "logs"
 
-for d in [DATA_RAW_DIR, DATA_LABEL_DIR, PLOTS_DIR]:
+for d in [DATA_RAW_DIR, DATA_LABEL_DIR, PLOTS_DIR, LOG_DIR]:
     d.mkdir(parents=True, exist_ok=True)
 
 START_DATE = "2019-01-01"
