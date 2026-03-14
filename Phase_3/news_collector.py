@@ -20,7 +20,6 @@ from config import (
 
 log = logging.getLogger(__name__)
 
-
 def _clean_text(text: str) -> str:
     if not text:
         return ""
@@ -28,7 +27,6 @@ def _clean_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text)
     text = text.strip()
     return text
-
 
 def _parse_date(entry) -> datetime | None:
     for field in ["published_parsed", "updated_parsed"]:
@@ -49,7 +47,6 @@ def _parse_date(entry) -> datetime | None:
                 except ValueError:
                     continue
     return None
-
 
 def _entry_to_dict(entry, source: str) -> dict | None:
     title = _clean_text(getattr(entry, "title", ""))
@@ -74,7 +71,6 @@ def _entry_to_dict(entry, source: str) -> dict | None:
         "collected_at": datetime.now().isoformat(),
     }
 
-
 def _match_tickers(text: str, ticker_to_company: dict) -> list[str]:
     text_lower = text.lower()
     matched = []
@@ -84,7 +80,6 @@ def _match_tickers(text: str, ticker_to_company: dict) -> list[str]:
                 matched.append(ticker)
                 break
     return matched
-
 
 def collect_rss_feeds() -> list[dict]:
     all_articles = []
@@ -107,7 +102,6 @@ def collect_rss_feeds() -> list[dict]:
 
     log.info(f"  Total from RSS feeds: {len(all_articles)}")
     return all_articles
-
 
 def collect_google_news(tickers: list[str] = None) -> list[dict]:
     if tickers is None:
@@ -150,7 +144,6 @@ def collect_google_news(tickers: list[str] = None) -> list[dict]:
     log.info(f"  Total from Google News: {len(all_articles)}")
     return all_articles
 
-
 def match_articles_to_tickers(articles: list[dict]) -> pd.DataFrame:
     rows = []
     for article in articles:
@@ -176,7 +169,6 @@ def match_articles_to_tickers(articles: list[dict]) -> pd.DataFrame:
              f"across {df['ticker'].nunique()} tickers")
     return df
 
-
 def collect_all_news() -> pd.DataFrame:
     log.info("=" * 60)
     log.info("PHASE 3 — News Collection Pipeline")
@@ -198,7 +190,6 @@ def collect_all_news() -> pd.DataFrame:
 
     return df
 
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s | %(levelname)s | %(message)s")
@@ -206,4 +197,3 @@ if __name__ == "__main__":
     print(f"\nCollected {len(df)} ticker-article pairs")
     print(f"Tickers covered: {df['ticker'].nunique()}")
     print(f"\nSample:\n{df[['ticker', 'source', 'title']].head(10)}")
-

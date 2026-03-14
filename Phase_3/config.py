@@ -163,4 +163,3 @@ TRAIN_END = "2022-12-31"
 VAL_END   = "2023-12-31"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-

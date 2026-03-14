@@ -24,7 +24,6 @@ MIN_TEMPORAL_COVERAGE = 0.50
 MIN_FEATURE_VARIANCE = 0.01
 MIN_REGIME_CORRELATION = 0.02
 
-
 def load_all_sentiment_features() -> dict[str, pd.DataFrame]:
     features = {}
     for ticker in NIFTY_50_TICKERS:
@@ -33,7 +32,6 @@ def load_all_sentiment_features() -> dict[str, pd.DataFrame]:
             df = pd.read_csv(path, index_col=0, parse_dates=True)
             features[ticker] = df
     return features
-
 
 def evaluate_coverage(features: dict) -> dict:
     total_tickers = len(NIFTY_50_TICKERS)
@@ -59,7 +57,6 @@ def evaluate_coverage(features: dict) -> dict:
         "total_tickers": total_tickers,
         "mean_temporal_coverage": mean_temporal,
     }
-
 
 def evaluate_feature_quality(features: dict) -> dict:
     log.info("\n--- Feature Quality Analysis ---")
@@ -87,7 +84,6 @@ def evaluate_feature_quality(features: dict) -> dict:
         "high_variance_ratio": high_variance_ratio,
         "stats": stats,
     }
-
 
 def evaluate_regime_correlation(features: dict) -> dict:
     log.info("\n--- Regime Correlation Analysis ---")
@@ -130,7 +126,6 @@ def evaluate_regime_correlation(features: dict) -> dict:
         "max_abs_correlation": max_abs_corr,
     }
 
-
 def evaluate_sentiment_by_regime(features: dict) -> dict:
     log.info("\n--- Sentiment by Regime ---")
 
@@ -164,7 +159,6 @@ def evaluate_sentiment_by_regime(features: dict) -> dict:
         log.info(f"  {regime}: mean_composite_sentiment={mean_val:.4f} (n={len(vals)})")
 
     return results
-
 
 def create_dashboard(coverage: dict, quality: dict, correlation: dict,
                      regime_sentiment: dict, go_no_go: dict):
@@ -229,7 +223,6 @@ def create_dashboard(coverage: dict, quality: dict, correlation: dict,
     fig.write_html(str(out_path))
     log.info(f"Dashboard saved: {out_path}")
 
-
 def go_no_go(coverage: dict, quality: dict, correlation: dict) -> dict:
     log.info("\n" + "=" * 60)
     log.info("GO / NO-GO DECISION — Phase 3 → Phase 4")
@@ -284,7 +277,6 @@ def go_no_go(coverage: dict, quality: dict, correlation: dict) -> dict:
     return {"checks": checks, "verdict": verdict,
             "passed": total_pass, "total": total}
 
-
 def run_evaluation():
     log.info("\n" + "=" * 60)
     log.info("PHASE 3 — EVALUATION & QUALITY REPORT")
@@ -330,9 +322,7 @@ def run_evaluation():
 
     return summary
 
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s | %(levelname)s | %(message)s")
     summary = run_evaluation()
-
