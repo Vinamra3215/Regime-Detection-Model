@@ -20,7 +20,6 @@ from config import (
 
 log = logging.getLogger(__name__)
 
-
 def load_transformer():
     p_config = sys.modules.get("config")
     spec = importlib.util.spec_from_file_location("config", str(PHASE4_DIR / "config.py"))
@@ -51,7 +50,6 @@ def load_transformer():
 
     return model, price_scaler, sent_scaler, ckpt["num_sent_features"]
 
-
 def mc_dropout_predict(model, x_price, x_sent, stock_id, n_samples=10):
     for m in model.modules():
         if isinstance(m, torch.nn.Dropout):
@@ -74,7 +72,6 @@ def mc_dropout_predict(model, x_price, x_sent, stock_id, n_samples=10):
     uncertainty = max(pred_ent - indiv_ent, 0.0)
 
     return mean_probs, conf, uncertainty
-
 
 def precompute_predictions(model, price_scaler, sent_scaler, num_sent,
                            start_date, end_date):
@@ -141,7 +138,6 @@ def precompute_predictions(model, price_scaler, sent_scaler, num_sent,
             all_data[ticker] = pd.DataFrame(records)
 
     return all_data
-
 
 class TradingEnv(gym.Env):
 
@@ -280,4 +276,3 @@ class TradingEnv(gym.Env):
         }
 
         return obs, float(reward), terminated, truncated, info
-

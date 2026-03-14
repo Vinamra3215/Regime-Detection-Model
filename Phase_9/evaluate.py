@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 PROJECT_DIR = RESULTS_DIR.parent.parent
 PHASE8_RESULTS = PROJECT_DIR / "results" / "phase_8"
 
-
 def txn_cost(value, is_buy=True):
     stt = value * ZERODHA_STT_PCT if not is_buy else 0
     exc = value * ZERODHA_EXCHANGE_PCT
@@ -26,7 +25,6 @@ def txn_cost(value, is_buy=True):
     stamp = value * ZERODHA_STAMP_PCT if is_buy else 0
     slip = value * SLIPPAGE_PCT
     return stt + exc + gst + sebi + stamp + slip
-
 
 def simulate_portfolio(records):
     if not records:
@@ -81,7 +79,6 @@ def simulate_portfolio(records):
     portfolio_df = pd.DataFrame(daily_records)
     return portfolio_df, total_costs
 
-
 def compute_metrics(portfolio_df, name="RL Strategy"):
     if len(portfolio_df) < 2:
         return {}
@@ -122,7 +119,6 @@ def compute_metrics(portfolio_df, name="RL Strategy"):
         "n_days": n,
     }
 
-
 def load_phase8_metrics():
     p8_file = PHASE8_RESULTS / "phase8_backtest_summary.json"
     if p8_file.exists():
@@ -130,7 +126,6 @@ def load_phase8_metrics():
             data = json.load(f)
         return data.get("strategy", {})
     return {}
-
 
 def run_go_no_go(rl_metrics, p8_metrics):
     checks = {}
@@ -183,7 +178,6 @@ def run_go_no_go(rl_metrics, p8_metrics):
     log.info("=" * 60)
 
     return {"checks": checks, "verdict": verdict, "passed": passed, "total": total}
-
 
 def create_dashboard(rl_portfolio_df, rl_metrics, p8_metrics):
     try:
@@ -247,7 +241,6 @@ def create_dashboard(rl_portfolio_df, rl_metrics, p8_metrics):
     fig.write_html(str(path))
     log.info(f"Dashboard saved: {path}")
 
-
 def save_results(portfolio_df, rl_metrics, p8_metrics, go_results, records, total_costs):
     portfolio_df.to_csv(RESULTS_DIR / "rl_portfolio.csv", index=False)
     pd.DataFrame(records).to_csv(RESULTS_DIR / "rl_daily_decisions.csv", index=False)
@@ -276,4 +269,3 @@ def save_results(portfolio_df, rl_metrics, p8_metrics, go_results, records, tota
         f.write(f"  Verdict: {go_results['verdict']} ({go_results['passed']}/{go_results['total']})\n")
 
     log.info(f"Results saved to {RESULTS_DIR}/")
-

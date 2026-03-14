@@ -17,7 +17,6 @@ from trading_env import TradingEnv
 
 log = logging.getLogger(__name__)
 
-
 class LoggingCallback(BaseCallback):
 
     def __init__(self, log_freq=10_000, verbose=0):
@@ -36,7 +35,6 @@ class LoggingCallback(BaseCallback):
                     f"Mean Ep Len: {mean_len:>6.0f}"
                 )
         return True
-
 
 def train_ppo(train_data, eval_data=None):
     log.info(f"Creating training environment...")
@@ -90,7 +88,6 @@ def train_ppo(train_data, eval_data=None):
     env.close()
     return model
 
-
 def evaluate_agent(model, eval_data):
     env = TradingEnv(eval_data, mode="eval")
     obs, _ = env.reset()
@@ -128,4 +125,3 @@ def evaluate_agent(model, eval_data):
 
     log.info(f"  Evaluation: {step} steps, total reward: {total_reward:.2f}")
     return records
-
