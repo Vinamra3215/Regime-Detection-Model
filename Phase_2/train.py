@@ -33,7 +33,6 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-
 class FocalLoss(nn.Module):
 
     def __init__(self, alpha: torch.Tensor = None, gamma: float = 2.0,
@@ -79,7 +78,6 @@ class FocalLoss(nn.Module):
             return loss.sum()
         return loss
 
-
 def get_linear_warmup_cosine_scheduler(optimizer, warmup_epochs, total_epochs, steps_per_epoch):
     warmup_steps = warmup_epochs * steps_per_epoch
     total_steps = total_epochs * steps_per_epoch
@@ -91,7 +89,6 @@ def get_linear_warmup_cosine_scheduler(optimizer, warmup_epochs, total_epochs, s
         return 0.5 * (1.0 + math.cos(math.pi * progress))
 
     return optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
-
 
 class EarlyStopping:
 
@@ -117,7 +114,6 @@ class EarlyStopping:
                 self.should_stop = True
                 return True
             return False
-
 
 def train_one_epoch(
     model: nn.Module,
@@ -179,7 +175,6 @@ def train_one_epoch(
         "regime_acc": regime_acc,
         "trans_acc":  trans_acc,
     }
-
 
 @torch.no_grad()
 def validate(
@@ -248,7 +243,6 @@ def validate(
         "high_conf_acc":  high_conf_acc,
         "high_conf_frac": high_conf_mask.float().mean().item(),
     }
-
 
 def train(
     tickers: list[str] = NIFTY_50_TICKERS,
@@ -399,7 +393,6 @@ def train(
 
     return model, best_val_acc
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Phase 2 — Train Transformer Regime Classifier")
     parser.add_argument("--epochs", type=int, default=EPOCHS)
@@ -410,7 +403,6 @@ def parse_args():
     parser.add_argument("--smoke-test", action="store_true",
                         help="Run only 2 epochs for quick validation")
     return parser.parse_args()
-
 
 if __name__ == "__main__":
     args = parse_args()
@@ -424,4 +416,3 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         smoke_test=args.smoke_test,
     )
-

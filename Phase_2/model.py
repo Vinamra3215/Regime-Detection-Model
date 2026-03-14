@@ -10,7 +10,6 @@ from config import (
     NUM_STOCKS, STOCK_EMBED_DIM,
 )
 
-
 class PositionalEncoding(nn.Module):
 
     def __init__(self, d_model: int, max_len: int = 500, dropout: float = 0.1):
@@ -23,7 +22,6 @@ class PositionalEncoding(nn.Module):
         positions = torch.arange(seq_len, device=x.device).unsqueeze(0).expand(batch_size, -1)
         x = x + self.pos_embedding(positions)
         return self.dropout(x)
-
 
 class SentimentFusionPlaceholder(nn.Module):
 
@@ -57,7 +55,6 @@ class SentimentFusionPlaceholder(nn.Module):
         fused = self.norm(fused)
 
         return fused
-
 
 class TransformerRegimeModel(nn.Module):
 
@@ -183,7 +180,6 @@ class TransformerRegimeModel(nn.Module):
     def count_parameters(self) -> int:
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
-
 def build_model(num_features: int, **kwargs) -> TransformerRegimeModel:
     model = TransformerRegimeModel(num_features=num_features, **kwargs)
     param_count = model.count_parameters()
@@ -194,7 +190,6 @@ def build_model(num_features: int, **kwargs) -> TransformerRegimeModel:
     print(f"  Architecture: d_model={D_MODEL}, heads={N_HEAD}, layers={NUM_LAYERS}")
     print(f"{'─'*50}\n")
     return model
-
 
 if __name__ == "__main__":
     batch_size = 4
@@ -215,4 +210,3 @@ if __name__ == "__main__":
     print(f"\nSample regime probs: {output['regime_probs'][0].detach()}")
     print(f"Sample transition prob: {output['transition_prob'][0].item():.4f}")
     print(f"\nStock embedding shape: {model.stock_embedding.weight.shape}")
-

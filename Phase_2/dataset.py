@@ -19,7 +19,6 @@ from config import (
 
 log = logging.getLogger(__name__)
 
-
 class RegimeDataset(Dataset):
 
     def __init__(self, windows: np.ndarray, labels: np.ndarray,
@@ -40,7 +39,6 @@ class RegimeDataset(Dataset):
     def __getitem__(self, idx):
         return self.windows[idx], self.labels[idx], self.transitions[idx], self.stock_ids[idx]
 
-
 def load_phase1_data(tickers: list[str] = NIFTY_50_TICKERS,
                      label_dir: Path = PHASE1_LABEL_DIR) -> dict[str, pd.DataFrame]:
     data = {}
@@ -53,7 +51,6 @@ def load_phase1_data(tickers: list[str] = NIFTY_50_TICKERS,
     log.info(f"Loaded {len(data)} labelled tickers from Phase 1.")
     return data
 
-
 def _compute_transition_labels(regimes: np.ndarray, horizon: int = TRANSITION_WINDOW) -> np.ndarray:
     n = len(regimes)
     transitions = np.zeros(n, dtype=np.float32)
@@ -64,14 +61,12 @@ def _compute_transition_labels(regimes: np.ndarray, horizon: int = TRANSITION_WI
             transitions[i] = 1.0
     return transitions
 
-
 def _validate_features(df: pd.DataFrame, feature_cols: list[str]) -> list[str]:
     available = [c for c in feature_cols if c in df.columns]
     missing = set(feature_cols) - set(available)
     if missing:
         log.warning(f"Missing feature columns: {missing}")
     return available
-
 
 def build_windows(data: dict[str, pd.DataFrame],
                   feature_cols: list[str] = FEATURE_COLUMNS,
@@ -136,7 +131,6 @@ def build_windows(data: dict[str, pd.DataFrame],
 
     return windows, labels, transitions, dates_arr, tickers_arr
 
-
 def fit_scaler(windows: np.ndarray) -> RobustScaler:
     N, W, F = windows.shape
     flat = windows.reshape(-1, F)
@@ -144,13 +138,11 @@ def fit_scaler(windows: np.ndarray) -> RobustScaler:
     scaler.fit(flat)
     return scaler
 
-
 def apply_scaler(windows: np.ndarray, scaler: RobustScaler) -> np.ndarray:
     N, W, F = windows.shape
     flat = windows.reshape(-1, F)
     scaled = scaler.transform(flat)
     return scaled.reshape(N, W, F).astype(np.float32)
-
 
 def compute_class_weights(labels: np.ndarray, mode: str = CLASS_WEIGHT_MODE) -> torch.Tensor:
     counts = np.bincount(labels, minlength=NUM_CLASSES).astype(np.float64)
@@ -168,7 +160,6 @@ def compute_class_weights(labels: np.ndarray, mode: str = CLASS_WEIGHT_MODE) -> 
     weights = weights / weights.sum() * NUM_CLASSES
     log.info(f"Class weights ({mode}): Bear={weights[0]:.3f}, Sideways={weights[1]:.3f}, Bull={weights[2]:.3f}")
     return torch.FloatTensor(weights)
-
 
 def create_dataloaders(
     tickers: list[str] = NIFTY_50_TICKERS,
@@ -226,7 +217,6 @@ def create_dataloaders(
 
     return train_loader, val_loader, test_loader, class_weights
 
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
@@ -241,4 +231,3 @@ if __name__ == "__main__":
     print(f"\nClass weights: {cw}")
     print(f"Label distribution in batch: {torch.bincount(y, minlength=3)}")
     print(f"Stock ID range in batch: [{s.min().item()}, {s.max().item()}]")
-
