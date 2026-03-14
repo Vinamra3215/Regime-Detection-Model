@@ -1,4 +1,3 @@
-
 import sys
 import importlib.util
 import numpy as np
@@ -115,7 +114,13 @@ def generate_signal(pred):
             return "WEAK_LONG", 0.5
         return "FLAT", 0.0
 
+    # For specific NIFTY50 as it was mostly bullish kind of so we have used Long-Flat only and avoided Short but using RL which is phase 9, We have included the Long-Short-Flat.
     if regime == "Bear":
+        # For a specific stock which goes Bull-Bear equivalently then we can uncomment below for the Long-Short-Flat
+        # if conf >= HIGH_CONF_THRESHOLD and unc < UNCERTAINTY_THRESHOLD:
+        #     return "STRONG_SHORT", -1.0
+        # elif conf >= MED_CONF_THRESHOLD:
+            return "WEAK_SHORT", -0.5
         return "FLAT", 0.0
 
     return "FLAT", 0.0
