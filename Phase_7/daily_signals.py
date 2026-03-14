@@ -24,14 +24,12 @@ log = logging.getLogger(__name__)
 
 PHASE4_DIR = Path(__file__).resolve().parent.parent / "Phase_4"
 
-
 def _load_module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     mod = importlib.util.module_from_spec(spec)
     sys.modules[name] = mod
     spec.loader.exec_module(mod)
     return mod
-
 
 def load_model():
     p5_config = sys.modules.get("config")
@@ -62,7 +60,6 @@ def load_model():
 
     log.info(f"Model loaded: {num_price} price, {num_sent} sent features, T={temperature:.4f}")
     return model, price_scaler, sent_scaler, num_sent, temperature
-
 
 def mc_predict_single(model, x_price, x_sent, stock_id, n_samples=20):
     model.eval()
@@ -99,7 +96,6 @@ def mc_predict_single(model, x_price, x_sent, stock_id, n_samples=20):
         "probs": mean_probs,
     }
 
-
 def generate_signal(pred):
     regime = pred["predicted_regime"]
     conf = pred["confidence"]
@@ -120,14 +116,9 @@ def generate_signal(pred):
         return "FLAT", 0.0
 
     if regime == "Bear":
-        if conf >= HIGH_CONF_THRESHOLD and unc < UNCERTAINTY_THRESHOLD:
-            return "STRONG_SHORT", -1.0
-        elif conf >= MED_CONF_THRESHOLD:
-            return "WEAK_SHORT", -0.5
         return "FLAT", 0.0
 
     return "FLAT", 0.0
-
 
 def generate_daily_signals(model, price_scaler, sent_scaler, num_sent, temperature):
     eval_start = pd.Timestamp(EVAL_START)
@@ -222,4 +213,3 @@ def generate_daily_signals(model, price_scaler, sent_scaler, num_sent, temperatu
 
     log.info(f"Generated daily signals for {len(all_results)} tickers")
     return all_results
-

@@ -82,4 +82,3 @@ TRADING_DAYS_PER_YEAR = 252
 INITIAL_CAPITAL = 1_000_000
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-

@@ -11,7 +11,6 @@ from config import (
 
 log = logging.getLogger(__name__)
 
-
 class Position:
     def __init__(self, ticker, direction, size, entry_date):
         self.ticker = ticker
@@ -43,7 +42,6 @@ class Position:
 
     def can_exit(self):
         return self.holding_days >= MIN_HOLDING_DAYS
-
 
 def simulate_portfolio(daily_signals_dict):
     all_dates = set()
@@ -151,4 +149,3 @@ def simulate_portfolio(daily_signals_dict):
                  f"({len(winning)}/{len(trade_df)})")
 
     return portfolio_df, trade_df
-
