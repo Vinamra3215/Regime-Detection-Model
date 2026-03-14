@@ -56,4 +56,3 @@ KITE_API_SECRET = ""
 PAPER_TRADE_MODE = True
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-

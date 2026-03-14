@@ -15,7 +15,6 @@ from config import (
 
 log = logging.getLogger(__name__)
 
-
 def compute_transaction_cost(trade_value, is_buy=True):
     brokerage = 0
 
@@ -33,7 +32,6 @@ def compute_transaction_cost(trade_value, is_buy=True):
 
     total = brokerage + stt + exchange_txn + gst + sebi + stamp + slippage
     return total
-
 
 class BacktestPosition:
     def __init__(self, ticker, entry_price, shares, entry_date, signal_strength):
@@ -69,7 +67,6 @@ class BacktestPosition:
         net_pnl = gross_pnl - self.entry_cost - exit_cost
         total_costs = self.entry_cost + exit_cost
         return net_pnl, total_costs
-
 
 def run_backtest(daily_signals_df):
     eval_start = pd.Timestamp(EVAL_START)
@@ -238,7 +235,6 @@ def run_backtest(daily_signals_df):
     log.info(f"Backtest complete: {len(trade_df)} trades, Rs {total_costs:,.0f} total costs")
     return portfolio_df, trade_df, total_costs
 
-
 def compute_buy_and_hold(daily_signals_df):
     eval_start = pd.Timestamp(EVAL_START)
     eval_end = pd.Timestamp(EVAL_END)
@@ -256,4 +252,3 @@ def compute_buy_and_hold(daily_signals_df):
         records.append({"date": date, "buyhold_value": total_value})
 
     return pd.DataFrame(records)
-
